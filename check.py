@@ -2,42 +2,51 @@ import requests
 
 BASE_URL = "http://127.0.0.1:8000"
 
-# 1. Регистрация
-def register_user(email, password):
-    response = requests.post(f"{BASE_URL}/register", params={"email": email, "password": password})
+# Регистрация пользователя
+def register():
+    response = requests.post(f"{BASE_URL}/register", params={
+        "email": "test@example.com",
+        "password": "secret"
+    })
     print("Register:", response.status_code, response.json())
 
-# 2. Логин
-def login(email, password):
-    response = requests.post(f"{BASE_URL}/token", data={"username": email, "password": password})
+# Авторизация
+def login():
+    response = requests.post(f"{BASE_URL}/token", data={
+        "username": "test@example.com",
+        "password": "secret"
+    })
     print("Login:", response.status_code, response.json())
     return response.json().get("access_token")
 
-# 3. Создание вида
+# Создание вида
 def create_species(token):
-    headers = {"Authorization": f"Bearer {token}"}
-    payload = {
-        "name": "Белка",
-        "scientific_name": "Sciurus vulgaris",
-        "description": "Обыкновенная белка",
-        "type": "fauna",
-        "image_url": "https://example.com/squirrel.jpg"
-    }
-    response = requests.post(f"{BASE_URL}/species", params=payload, headers=headers)
+    response = requests.post(f"{BASE_URL}/species", params={
+        "name": "Ель",
+        "scientific_name": "Picea abies",
+        "description": "Хвойное дерево",
+        "is_flora": True,
+        "image_url": "http://example.com/image.jpg"
+    }, headers={"Authorization": f"Bearer {token}"})
     print("Create species:", response.status_code, response.json())
 
-# 4. Поиск вида
-def search_species(name):
-    response = requests.get(f"{BASE_URL}/species/search", params={"name": name})
-    print("Search:", response.status_code, response.json())
+# Поиск вида
+def search_species():
+    response = requests.get(f"{BASE_URL}/species/search", params={
+        "name": "Ель"
+    })
+    print("Search species:", response.status_code, response.json())
 
+# Получить все виды
+def list_species():
+    response = requests.get(f"{BASE_URL}/species")
+    print("All species:", response.status_code, response.json())
+
+# Запуск тестов
 if __name__ == "__main__":
-    email = "test@example.com"
-    password = "secret123"
-
-    register_user(email, password)
-    token = login(email, password)
-
+    register()
+    token = login()
     if token:
         create_species(token)
-        search_species("Белка")
+    search_species()
+    list_species()

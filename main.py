@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from sqlalchemy import Column, Integer, String, Text, create_engine, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, create_engine, ForeignKey, Boolean
 from sqlalchemy.orm import declarative_base, sessionmaker, Session, relationship
 from passlib.context import CryptContext
 from typing import List, Optional
@@ -30,7 +30,7 @@ class Species(Base):
     name = Column(String, unique=True, index=True)
     scientific_name = Column(String)
     description = Column(Text)
-    type = Column(String)  # flora/fauna
+    is_flora = Column(Boolean)  # True - flora, False - fauna
     image_url = Column(String)  # ссылка на изображение
 
 Base.metadata.create_all(bind=engine)
@@ -78,7 +78,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 
 # ==================== SPECIES ====================
 @app.post("/species")
-def create_species(name: str, scientific_name: str, description: str, type: str, image_url: str, db: Session = Depends(get_db)):
+def create_species(name: str, scientific_name: str, description: str, is_flora: bool, image_url: str, db: Session = Depends(get_db)):
     existing = db.query(Species).filter(Species.name == name).first()
     if existing:
         raise HTTPException(status_code=400, detail="Species already exists")
@@ -86,13 +86,17 @@ def create_species(name: str, scientific_name: str, description: str, type: str,
         name=name,
         scientific_name=scientific_name,
         description=description,
-        type=type,
+        is_flora=is_flora,
         image_url=image_url
     )
     db.add(new_species)
     db.commit()
     db.refresh(new_species)
     return new_species
+
+@app.get("/species")
+def get_all_species(db: Session = Depends(get_db)):
+    return db.query(Species).all()
 
 @app.get("/species/search")
 def search_species(name: str, db: Session = Depends(get_db)):
